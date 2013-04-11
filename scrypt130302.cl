@@ -758,50 +758,37 @@ void salsa(uint4 B[8])
 void scrypt_core(uint4 X[8], __global uint4*restrict lookup)
 {
 	shittify(X);
-	const uint zSIZE = 8;
-	const uint ySIZE = (1024/LOOKUP_GAP+(1024%LOOKUP_GAP>0));
+	//const uint zSIZE = 8;
+	//const uint ySIZE = 256;
 	const uint xSIZE = CONCURRENT_THREADS;
 	uint x = get_global_id(0)%xSIZE;
-
-	for(uint y=0; y<1024/LOOKUP_GAP; ++y)
+	
+#pragma unroll
+	for(uint y=0; y<256; ++y)
 	{
 #pragma unroll
-		for(uint z=0; z<zSIZE; ++z)
+		for(uint z=0; z<8; ++z)
 			lookup[CO] = X[z];
-		for(uint i=0; i<LOOKUP_GAP; ++i) 
+#pragma unroll
+		for(uint i=0; i<4; ++i) 
 			salsa(X);
 	}
-#if (LOOKUP_GAP != 1) && (LOOKUP_GAP != 2) && (LOOKUP_GAP != 4) && (LOOKUP_GAP != 8)
-	{
-		uint y = (1024/LOOKUP_GAP);
 #pragma unroll
-		for(uint z=0; z<zSIZE; ++z)
-			lookup[CO] = X[z];
-		for(uint i=0; i<1024%LOOKUP_GAP; ++i)
-			salsa(X); 
-	}
-#endif
 	for (uint i=0; i<1024; ++i) 
 	{
 		uint4 V[8];
 		uint j = X[7].x & K[85];
-		uint y = (j/LOOKUP_GAP);
+		uint y = (j/4);
 #pragma unroll
-		for(uint z=0; z<zSIZE; ++z)
+		for(uint z=0; z<8; ++z)
 			V[z] = lookup[CO];
-
-#if (LOOKUP_GAP == 1)
-#elif (LOOKUP_GAP == 2)
-		if (j&1)
-			salsa(V);
-#else
-		uint val = j%LOOKUP_GAP;
+#pragma unroll
+		uint val = j%4;
 		for (uint z=0; z<val; ++z) 
 			salsa(V);
-#endif
 
 #pragma unroll
-		for(uint z=0; z<zSIZE; ++z)
+		for(uint z=0; z<8; ++z)
 			X[z] ^= V[z];
 		salsa(X);
 	}
