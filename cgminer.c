@@ -5535,8 +5535,8 @@ void submit_nonce(struct thr_info *thr, struct work *work, uint32_t nonce)
 	mutex_unlock(&stats_lock);
 
 	/* Do one last check before attempting to submit the work */
-	if (!opt_scrypt && !hashtest(thr, work))
-		return;
+	//if (!opt_scrypt && !hashtest(thr, work))
+	//	return;
 
 	submit_work_async(work, &tv_work_found);
 }
